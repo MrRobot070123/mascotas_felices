@@ -1,3 +1,21 @@
+<?php
+session_start();
+
+if(isset($_SESSION['mensaje'])){
+    echo "
+    <script>
+    document.addEventListener('DOMContentLoaded', function(){
+        Swal.fire({
+            icon:'success',
+            title:'Proceso realizado',
+            text:'".$_SESSION['mensaje']."'
+        });
+    });
+    </script>
+    ";
+    unset($_SESSION['mensaje']);
+}
+?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -57,6 +75,6 @@ Hora:
 </form>
 
 </div>
-
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </body>
 </html>

@@ -1,9 +1,71 @@
 <?php
 session_start();
 
+function alertaSweet($titulo,$mensaje,$icono="error",$redirigir="registro.php"){
+?>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
+<body>
+
+<script>
+
+Swal.fire({
+title: '<?php echo $titulo ?>',
+html: '<?php echo $mensaje ?>',
+icon: '<?php echo $icono ?>',
+confirmButtonText: 'Aceptar'
+}).then(()=>{
+window.location.href='<?php echo $redirigir ?>';
+});
+
+</script>
+
+</body>
+</html>
+<?php
+exit;
+}
+
 if(!isset($_SESSION['turnos'])){
     $_SESSION['turnos']=array();
 }
+
+function fechaBonita($fecha){
+    setlocale(LC_TIME, 'es_ES.UTF-8');
+    return strftime("%d de %B", strtotime($fecha));
+}
+
+function horaBonita($hora){
+    return date("g:i a", strtotime($hora));
+}
+
+/* SI VIENE CONFIRMACION */
+if(isset($_POST['confirmar'])){
+
+    if($_POST['confirmar']=="si"){
+
+        $_SESSION['turnos'][] = $_SESSION['turno_temp'];
+        unset($_SESSION['turno_temp']);
+
+        $_SESSION['mensaje']="Cita agendada con éxito";
+        header("Location: registro.php");
+        exit;
+
+    }else{
+
+        unset($_SESSION['turno_temp']);
+        $_SESSION['mensaje']="Cita no agendada";
+        header("Location: registro.php");
+        exit;
+    }
+}
+
+/* DATOS FORMULARIO */
 
 $animal = $_POST['animal'];
 $especie = $_POST['especie'];
@@ -13,47 +75,134 @@ $vet = $_POST['vet'];
 $fecha = $_POST['fecha'];
 $hora = $_POST['hora'];
 
-/* VALIDACION FECHA */
+/* VALIDAR FECHA */
 if($fecha < date("Y-m-d")){
-    echo "Fecha inválida";
-    exit;
+    alertaSweet(
+        "Fecha inválida",
+        "No puedes agendar turnos en fechas anteriores a hoy",
+        "error"
+    );
 }
 
-/* LIMITE 2 TURNOS POR DIA */
-$contador=0;
+/* VALIDAR LIMITE 2 TURNOS */
+$cont=0;
 foreach($_SESSION['turnos'] as $t){
     if($t['dueno']==$dueno && $t['fecha']==$fecha){
-        $contador++;
+        $cont++;
     }
 }
-
-if($contador>=2){
-    echo "Máximo 2 turnos por día";
+if($cont>=2){
+    alertaSweet(
+    "Limite alcanzado",
+    "$dueno ya tiene 2 turnos registrados ese día",
+    "warning"
+    );
     exit;
 }
 
-/* CRUCE MISMO VETERINARIO */
-foreach($_SESSION['turnos'] as $t){
-    if($t['fecha']==$fecha && $t['hora']==$hora && $t['vet']==$vet){
+/* DISPONIBILIDAD REAL DEL VETERINARIO */
 
-        $hora = date("H:i", strtotime($hora."+30 minutes"));
-        echo "Turno ocupado. Se sugiere nueva hora: ".$hora;
+$horasVet = [];
+
+foreach($_SESSION['turnos'] as $t){
+
+    if($t['fecha']==$fecha && $t['vet']==$vet){
+        $horasVet[] = $t['hora'];
     }
 }
 
-/* PERROS Y GATOS NO PUEDEN COINCIDIR */
+/* SI EL VETERINARIO TIENE CITAS ESE DIA */
+if(count($horasVet) > 0){
+
+    sort($horasVet);
+
+    $ultimaHora = end($horasVet);
+
+    if(strtotime($hora) <= strtotime($ultimaHora)){
+
+        $horaNueva = date("H:i", strtotime($ultimaHora."+30 minutes"));
+
+        $_SESSION['turno_temp']=array(
+        "animal"=>$animal,
+        "especie"=>$especie,
+        "dueno"=>$dueno,
+        "telefono"=>$telefono,
+        "vet"=>$vet,
+        "fecha"=>$fecha,
+        "hora"=>$horaNueva
+        );
+
+        ?>
+
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <meta charset="UTF-8">
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        </head>
+
+        <body>
+
+        <script>
+
+        Swal.fire({
+        title: 'Veterinario no disponible',
+        html: '<?php echo $vet ?> no está disponible para el día <?php echo fechaBonita($fecha) ?> a las <?php echo horaBonita($hora) ?><br><br>Disponible desde <?php echo horaBonita($horaNueva) ?>',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Agendar',
+        cancelButtonText: 'Cancelar'
+        }).then((result) => {
+
+            const form = document.createElement('form');
+            form.method='POST';
+            form.action='guardar_turno.php';
+
+            const input = document.createElement('input');
+            input.type='hidden';
+            input.name='confirmar';
+
+            if(result.isConfirmed){
+                input.value='si';
+            }else{
+                input.value='no';
+            }
+
+            form.appendChild(input);
+            document.body.appendChild(form);
+            form.submit();
+
+        });
+
+        </script>
+
+        </body>
+        </html>
+
+        <?php
+
+        exit;
+    }
+}
+
+/* VALIDAR PERRO Y GATO */
 foreach($_SESSION['turnos'] as $t){
+
     if($t['fecha']==$fecha && $t['hora']==$hora){
 
         if(($t['especie']=="Perro" && $especie=="Gato") ||
            ($t['especie']=="Gato" && $especie=="Perro")){
-            echo "Perros y gatos no pueden coincidir";
+            alertaSweet(
+            "Incompatibilidad de especies",
+            "No pueden coincidir perros y gatos en la misma hora",
+            "warning"
+            );
             exit;
         }
     }
 }
 
-/* GUARDAR */
+/* GUARDAR NORMAL */
 $turno=array(
 "animal"=>$animal,
 "especie"=>$especie,
@@ -66,5 +215,8 @@ $turno=array(
 
 $_SESSION['turnos'][]=$turno;
 
-header("Location: ver_turnos.php");
+$_SESSION['mensaje']="Cita agendada con éxito";
+
+header("Location: registro.php");
+
 ?>

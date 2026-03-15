@@ -23,7 +23,6 @@ session_start();
 </header>
 
 <div class="container">
-
 <table>
 
 <tr>
