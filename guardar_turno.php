@@ -3,33 +3,40 @@ session_start();
 
 function alertaSweet($titulo,$mensaje,$icono="error",$redirigir="registro.php"){
 ?>
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-</head>
+    <!DOCTYPE html>
+    <html>
+        <head>
+            <meta charset="UTF-8">
+            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        </head>
 
-<body>
-
-<script>
-
-Swal.fire({
-title: '<?php echo $titulo ?>',
-html: '<?php echo $mensaje ?>',
-icon: '<?php echo $icono ?>',
-confirmButtonText: 'Aceptar'
-}).then(()=>{
-window.location.href='<?php echo $redirigir ?>';
-});
-
-</script>
-
-</body>
-</html>
+        <body>
+            <script>
+                Swal.fire({
+                    title: '<?php echo $titulo ?>',
+                    html: '<?php echo $mensaje ?>',
+                    icon: '<?php echo $icono ?>',
+                    confirmButtonText: 'Aceptar'
+                    }).then(()=>{
+                    window.location.href='<?php echo $redirigir ?>';
+                });
+            </script>
+        </body>
+    </html>
 <?php
 exit;
 }
+
+/* DATOS FORMULARIO */
+
+$animal = $_POST['animal'];
+$especie = $_POST['especie'];
+$dueno = $_POST['dueno'];
+$telefono = $_POST['telefono'];
+$vet = $_POST['vet'];
+$fecha = $_POST['fecha'];
+$hora = $_POST['hora'];
+
 
 if(!isset($_SESSION['turnos'])){
     $_SESSION['turnos']=array();
@@ -44,13 +51,12 @@ function horaBonita($hora){
     return date("g:i a", strtotime($hora));
 }
 
-/* SI VIENE CONFIRMACION */
 if(isset($_POST['confirmar'])){
 
     if($_POST['confirmar']=="si"){
 
         $_SESSION['turnos'][] = $_SESSION['turno_temp'];
-        unset($_SESSION['turno_temp']);
+        unset($_SESSION['turno_temp']); /*Elimina la variable en memoria */
 
         $_SESSION['mensaje']="Cita agendada con éxito";
         header("Location: registro.php");
@@ -65,17 +71,6 @@ if(isset($_POST['confirmar'])){
     }
 }
 
-/* DATOS FORMULARIO */
-
-$animal = $_POST['animal'];
-$especie = $_POST['especie'];
-$dueno = $_POST['dueno'];
-$telefono = $_POST['telefono'];
-$vet = $_POST['vet'];
-$fecha = $_POST['fecha'];
-$hora = $_POST['hora'];
-
-/* VALIDAR FECHA */
 if($fecha < date("Y-m-d")){
     alertaSweet(
         "Fecha inválida",
@@ -84,7 +79,6 @@ if($fecha < date("Y-m-d")){
     );
 }
 
-/* VALIDAR LIMITE 2 TURNOS */
 $cont=0;
 foreach($_SESSION['turnos'] as $t){
     if($t['dueno']==$dueno && $t['fecha']==$fecha){
@@ -135,53 +129,45 @@ if(count($horasVet) > 0){
         "hora"=>$horaDisponible
         );
 ?>
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-</head>
+    <!DOCTYPE html>
+    <html>
+        <head>
+            <meta charset="UTF-8">
+            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        </head>
+        <body>
+            <script>
+                Swal.fire({
+                title: 'Veterinario no disponible',
+                html: '<?php echo $vet ?> no está disponible para el día <?php echo fechaBonita($fecha) ?> a las <?php echo horaBonita($hora) ?><br><br>Disponible desde <?php echo horaBonita($horaDisponible) ?>',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Agendar',
+                cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    const form = document.createElement('form');
+                    form.method='POST';
+                    form.action='guardar_turno.php';
 
-<body>
+                    const input = document.createElement('input');
+                    input.type='hidden';
+                    input.name='confirmar';
 
-<script>
+                    if(result.isConfirmed){
+                        input.value='si';
+                    }else{
+                        input.value='no';
+                    }
 
-Swal.fire({
-title: 'Veterinario no disponible',
-html: '<?php echo $vet ?> no está disponible para el día <?php echo fechaBonita($fecha) ?> a las <?php echo horaBonita($hora) ?><br><br>Disponible desde <?php echo horaBonita($horaDisponible) ?>',
-icon: 'warning',
-showCancelButton: true,
-confirmButtonText: 'Agendar',
-cancelButtonText: 'Cancelar'
-}).then((result) => {
-
-    const form = document.createElement('form');
-    form.method='POST';
-    form.action='guardar_turno.php';
-
-    const input = document.createElement('input');
-    input.type='hidden';
-    input.name='confirmar';
-
-    if(result.isConfirmed){
-        input.value='si';
-    }else{
-        input.value='no';
-    }
-
-    form.appendChild(input);
-    document.body.appendChild(form);
-    form.submit();
-
-});
-
-</script>
-
-</body>
-</html>
-
+                    form.appendChild(input);
+                    document.body.appendChild(form);
+                    form.submit();
+                });
+            </script>
+        </body>
+    </html>
 <?php
-        exit;
+    exit;
     }
 }
 
