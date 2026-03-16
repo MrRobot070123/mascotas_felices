@@ -116,11 +116,14 @@ if(count($horasVet) > 0){
 
     sort($horasVet);
 
-    $ultimaHora = end($horasVet);
+    $horaSolicitada = $hora;
+    $horaDisponible = $horaSolicitada;
 
-    if(strtotime($hora) <= strtotime($ultimaHora)){
+    while(in_array($horaDisponible, $horasVet)){
+        $horaDisponible = date("H:i", strtotime($horaDisponible . "+30 minutes"));
+    }
 
-        $horaNueva = date("H:i", strtotime($ultimaHora."+30 minutes"));
+    if($horaDisponible != $horaSolicitada){
 
         $_SESSION['turno_temp']=array(
         "animal"=>$animal,
@@ -129,58 +132,55 @@ if(count($horasVet) > 0){
         "telefono"=>$telefono,
         "vet"=>$vet,
         "fecha"=>$fecha,
-        "hora"=>$horaNueva
+        "hora"=>$horaDisponible
         );
+?>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
 
-        ?>
+<body>
 
-        <!DOCTYPE html>
-        <html>
-        <head>
-        <meta charset="UTF-8">
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-        </head>
+<script>
 
-        <body>
+Swal.fire({
+title: 'Veterinario no disponible',
+html: '<?php echo $vet ?> no está disponible para el día <?php echo fechaBonita($fecha) ?> a las <?php echo horaBonita($hora) ?><br><br>Disponible desde <?php echo horaBonita($horaDisponible) ?>',
+icon: 'warning',
+showCancelButton: true,
+confirmButtonText: 'Agendar',
+cancelButtonText: 'Cancelar'
+}).then((result) => {
 
-        <script>
+    const form = document.createElement('form');
+    form.method='POST';
+    form.action='guardar_turno.php';
 
-        Swal.fire({
-        title: 'Veterinario no disponible',
-        html: '<?php echo $vet ?> no está disponible para el día <?php echo fechaBonita($fecha) ?> a las <?php echo horaBonita($hora) ?><br><br>Disponible desde <?php echo horaBonita($horaNueva) ?>',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Agendar',
-        cancelButtonText: 'Cancelar'
-        }).then((result) => {
+    const input = document.createElement('input');
+    input.type='hidden';
+    input.name='confirmar';
 
-            const form = document.createElement('form');
-            form.method='POST';
-            form.action='guardar_turno.php';
+    if(result.isConfirmed){
+        input.value='si';
+    }else{
+        input.value='no';
+    }
 
-            const input = document.createElement('input');
-            input.type='hidden';
-            input.name='confirmar';
+    form.appendChild(input);
+    document.body.appendChild(form);
+    form.submit();
 
-            if(result.isConfirmed){
-                input.value='si';
-            }else{
-                input.value='no';
-            }
+});
 
-            form.appendChild(input);
-            document.body.appendChild(form);
-            form.submit();
+</script>
 
-        });
+</body>
+</html>
 
-        </script>
-
-        </body>
-        </html>
-
-        <?php
-
+<?php
         exit;
     }
 }
