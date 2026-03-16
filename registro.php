@@ -25,16 +25,19 @@ if(isset($_SESSION['mensaje'])){
 
 <body>
 
-<header>
-<h1>Registrar Turno</h1>
+    <header>
+        <div class="logo-section">
+            <img src="img/veterinario.png" class="logo">
+            <h1>Mascotas Felices: <span class="resaltado">Agenda tu cita</span></h1>
+        </div>
 
-<nav>
-<a href="index.php">Inicio</a>
-<a href="servicios.php">Servicios</a>
-<a href="registro.php">Registrar Turno</a>
-<a href="ver_turnos.php">Ver Turnos</a>
-</nav>
-</header>
+        <nav>
+            <a href="index.php">Inicio</a>
+            <a href="servicios.php">Servicios</a>
+            <a href="registro.php">Registrar Turno</a>
+            <a href="ver_turnos.php">Turnos</a>
+        </nav>
+    </header>
 
 <div class="container">
 
@@ -76,5 +79,8 @@ Hora:
 
 </div>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<footer>
+<p>© 2026 Clínica Veterinaria Mascotas Felices</p>
+</footer>
 </body>
 </html>

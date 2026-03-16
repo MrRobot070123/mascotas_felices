@@ -11,16 +11,19 @@ session_start();
 
 <body>
 
-<header>
-<h1>Turnos Registrados</h1>
+    <header>
+        <div class="logo-section">
+            <img src="img/veterinario.png" class="logo">
+            <h1>Mascotas Felices: <span class="resaltado">Turnos registrados</span></h1>
+        </div>
 
-<nav>
-<a href="index.php">Inicio</a>
-<a href="servicios.php">Servicios</a>
-<a href="registro.php">Registrar Turno</a>
-<a href="ver_turnos.php">Ver Turnos</a>
-</nav>
-</header>
+        <nav>
+            <a href="index.php">Inicio</a>
+            <a href="servicios.php">Servicios</a>
+            <a href="registro.php">Registrar Turno</a>
+            <a href="ver_turnos.php">Turnos</a>
+        </nav>
+    </header>
 
 <div class="container">
 <table>
